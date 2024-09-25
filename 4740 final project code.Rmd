@@ -1,0 +1,441 @@
+---
+title: "Code and Figures for Final Project"
+output: word_document
+---
+
+### Data Description and Preproccessing
+
+```{r}
+library(readr)
+library(kableExtra)
+library(MASS)
+library(ordinal)
+
+set.seed(1)
+# Loading Data
+wine.dat <- read_csv("wine-quality-white-and-red.csv")
+wine.dat$type[wine.dat$type == "red"] <- 0
+wine.dat$type[wine.dat$type == "white"] <- 1
+red.dat <- wine.dat[wine.dat$type == 0, ]
+white.dat <- wine.dat[wine.dat$type == 1, ]
+
+"kable(head(wine.dat)) %>%
+  kable_styling(full_width = FALSE)
+red.dat <- wine.dat[which(wine.dat[,1]==0),]
+white.dat<- wine.dat[which(wine.dat[,1]==1),]"
+
+n <- nrow(wine.dat)
+n.red<- nrow(red.dat)
+n.white <-nrow(white.dat)
+
+train.red <- sample(n.red, n.red/2)
+train.white<-sample(n.white, n.white/2)
+
+train.data.red <- red.dat[train.red,]
+test.data.red<- red.dat[-train.red,]
+
+train.data.white <-white.dat[train.white,]
+test.data.white <-white.dat[-train.white,]
+
+fin.train.data<- rbind(train.data.red,train.data.white)
+fin.test.data<- rbind(test.data.red, test.data.white)
+
+train.data.red <-train.data.red[,-1]
+test.data.red <-test.data.red[,-1]
+train.data.white <-train.data.white[,-1]
+test.data.white <-test.data.white[,-1]
+```
+
+\n 
+*Figure 1: Head of the Full Dataset*
+
+### Exploratory Data Analysis
+
+```{r}
+library(ggplot2)
+numeric_df <- wine.dat[, sapply(wine.dat, is.numeric)]
+correlation <- cor(numeric_df)
+pairs(correlation)
+```
+*Figure 2: Correlation Matrix of Predictors*
+
+```{r}
+ggplot(wine.dat, aes(x = type, y = quality)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Type of Wine by Wine Quality")
+```
+*Figure 3: Boxplot of Wine Grouped by Wine Type*
+
+```{r}
+ggplot(wine.dat, aes(x = type, y = quality, color = type)) +
+  geom_jitter(width = 0.3, alpha = 0.6) +
+  scale_color_manual (values = c("red" = "red", "white" = "yellow")) +
+  labs (title = "Wine Type vs. Quality", x = "Wine Type", y = "Quality") + 
+  theme_minimal()
+```
+*Figure 4: Jitter Plot Grouped by Wine Type*
+
+```{r}
+ggplot(wine.dat, aes(x = as.factor(quality), y = `fixed acidity`, fill = as.factor(quality))) +
+  geom_boxplot() + 
+  facet_wrap(~ type, nrow = 1) + 
+  labs(title = "Fixed Acidity by Wine Quality and Type", x = "Wine Quality", y = "Fixed Acidity") +
+  theme_minimal()
+```
+*Figure 5: Box Plot for Fixed Acidity Grouped by Wine Quality*
+
+```{r}
+ggplot(wine.dat, aes(x = as.factor(quality), y = `volatile acidity`, fill = as.factor(quality))) +
+  geom_boxplot() + 
+  facet_wrap(~ type, nrow = 1) + 
+  labs(title = "Volatile Acidity by Wine Quality and Type", x = "Wine Quality", y = "Volatile Acidity") +
+  theme_minimal()
+```
+*Figure 6: Box Plot for Volatile Acidity Grouped by Wine Quality*
+
+
+```{r}
+ggplot(wine.dat, aes(x = as.factor(quality), y = `citric acid`, fill = as.factor(quality))) +
+  geom_boxplot() + 
+  facet_wrap(~ type, nrow = 1) + 
+  labs(title = "Citric Acid by Wine Quality and Type", x = "Wine Quality", y = "Citric Acid") +
+  theme_minimal()
+```
+*Figure 7: Box Plot for Citric Acid Grouped by Wine Quality*
+
+
+```{r}
+ggplot(wine.dat, aes(x = as.factor(quality), y = `residual sugar`, fill = as.factor(quality))) +
+  geom_boxplot() + 
+  facet_wrap(~ type, nrow = 1) + 
+  labs(title = "Residual Sugar by Wine Quality and Type", x = "Wine Quality", y = "Residual Sugar") +
+  theme_minimal()
+```
+*Figure 8: Box Plot for Residual Sugar Grouped by Wine Quality*
+
+
+```{r}
+ggplot(wine.dat, aes(x = as.factor(quality), y = `fixed acidity`, fill = as.factor(quality))) +
+  geom_boxplot() + 
+  facet_wrap(~ type, nrow = 1) + 
+  labs(title = "Fixed Acidity by Wine Quality and Type", x = "Wine Quality", y = "Fixed Acidity") +
+  theme_minimal()
+```
+*Figure 9: Box Plot for Fixed Acidity Grouped by Wine Quality*
+
+
+```{r}
+ggplot(wine.dat, aes(x = as.factor(quality), y = chlorides, fill = as.factor(quality))) +
+  geom_boxplot() + 
+  facet_wrap(~ type, nrow = 1) + 
+  labs(title = "Chlorides by Wine Quality and Type", x = "Wine Quality", y = "Chlorides") +
+  theme_minimal()
+```
+*Figure 10: Box Plot for Chloride Grouped by Wine Quality*
+
+
+```{r}
+ggplot(wine.dat, aes(x = as.factor(quality), y = `free sulfur dioxide`, fill = as.factor(quality))) +
+  geom_boxplot() + 
+  facet_wrap(~ type, nrow = 1) + 
+  labs(title = "Free Sulfur Dioxide by Wine Quality and Type", x = "Wine Quality", y = "Free Sulfur Dioxide") +
+  theme_minimal()
+```
+*Figure 11: Box Plot for Free Sulfur Dioxide Grouped by Wine Quality*
+
+
+```{r}
+ggplot(wine.dat, aes(x = as.factor(quality), y = `total sulfur dioxide`, fill = as.factor(quality))) +
+  geom_boxplot() + 
+  facet_wrap(~ type, nrow = 1) + 
+  labs(title = "Total Sulfur Dioxide by Wine Quality and Type", x = "Wine Quality", y = "Total Sulfur Dioxide") +
+  theme_minimal()
+```
+*Figure 12: Box Plot for Total Sulfur Dioxide Grouped by Wine Quality*
+
+
+```{r}
+ggplot(wine.dat, aes(x = as.factor(quality), y = density, fill = as.factor(quality))) +
+  geom_boxplot() + 
+  facet_wrap(~ type, nrow = 1) + 
+  labs(title = "Density by Wine Quality and Type", x = "Wine Quality", y = "Density") +
+  theme_minimal()
+```
+*Figure 13: Box Plot for Density Grouped by Wine Quality*
+
+
+```{r}
+ggplot(wine.dat, aes(x = as.factor(quality), y = pH, fill = as.factor(quality))) +
+  geom_boxplot() + 
+  facet_wrap(~ type, nrow = 1) + 
+  labs(title = "pH by Wine Quality and Type", x = "Wine Quality", y = "pH") +
+  theme_minimal()
+```
+*Figure 14: Box Plot for pH Grouped by Wine Quality*
+
+
+```{r}
+ggplot(wine.dat, aes(x = as.factor(quality), y = sulphates, fill = as.factor(quality))) +
+  geom_boxplot() + 
+  facet_wrap(~ type, nrow = 1) + 
+  labs(title = "Sulphates by Wine Quality and Type", x = "Wine Quality", y = "Sulphates") +
+  theme_minimal()
+```
+*Figure 15: Box Plot for Sulphates Grouped by Wine Quality*
+
+
+```{r}
+ggplot(wine.dat, aes(x = as.factor(quality), y = alcohol, fill = as.factor(quality))) +
+  geom_boxplot() + 
+  facet_wrap(~ type, nrow = 1) + 
+  labs(title = "Alcohol by Wine Quality and Type", x = "Wine Quality", y = "Alcohol") +
+  theme_minimal()
+```
+*Figure 16: Box Plot for Alchohol Grouped by Wine Quality*
+
+
+### Linear regression
+
+```{r}
+#Dataset with both red and white
+fin.train.data <- fin.train.data[-1993,]
+lm.fit.both <- lm(quality ~ ., data = fin.train.data)
+lm.both.sum<-summary(lm.fit.both)
+lm.both.pred <- predict(lm.fit.both, fin.test.data)
+lm.both.mse <- mean((lm.both.pred - fin.test.data$quality)^2)
+lm.both.mse
+par(mfrow = c(2, 2))
+plot(lm.fit.both)
+```
+*Figure 17: Diagnostic Plots for Grouped Linear Model*
+```{r}
+lm.both.sum
+```
+*Figure 18: Summary of our Grouped Linear Model*
+```{r}
+coefficients <- coef(lm.fit.both)[-1]
+names(coefficients) <- names(lm.fit.both$coefficients)[-1]
+
+barplot(coefficients, main = "Coefficients of Linear Regression Model for All Wines",
+        xlab = "Predictor Variables", ylab = "Increase in Quality per Unit Increase",
+        las = 2,  # Rotate x-axis labels by 90 degrees
+        cex.names = 0.5,  # Adjust size of x-axis labels
+        ylim = range(coefficients) * c(1.2, 1.3),  # Extend y-axis limits for better spacing
+        mar = c(5, 6, 4, 2)  # Adjust margin space: bottom, left, top, right
+)
+```
+*Figure 19: Plot of Coefficients for Grouped Linear Model*
+
+```{r}
+#Dataset with only red
+lm.fit.red <- lm(quality ~ ., data = train.data.red)
+lm.red.sum<-summary(lm.fit.red)
+lm.red.pred <- predict(lm.fit.red, test.data.red)
+lm.red.mse <- mean((lm.red.pred - test.data.red$quality)^2)
+lm.red.mse
+
+par(mfrow = c(2, 2))
+plot(lm.fit.red)
+```
+*Figure 20: Diagnostic Plots for Red Segmented Linear Model*
+```{r}
+lm.red.sum
+```
+*Figure 21: Summary of our Red Linear Model*
+```{r}
+coefficients <- coef(lm.fit.red)[-1]
+names(coefficients) <- names(lm.fit.red$coefficients)[-1]
+
+barplot(coefficients, main = "Coefficients of Linear Regression Model for Red Wine",
+        xlab = "Predictor Variables", ylab = "Increase in Quality per Unit Increase",
+        las = 2,  # Rotate x-axis labels by 90 degrees
+        cex.names = 0.5,  # Adjust size of x-axis labels
+        ylim = range(coefficients) * c(1.2, 1.3),  # Extend y-axis limits for better spacing
+        mar = c(5, 6, 4, 2)  # Adjust margin space: bottom, left, top, right
+)
+```
+*Figure 22: Plot of Coefficients for Segmented Red Linear Model*
+
+```{r}
+#Dataset with only white
+lm.fit.white <- lm(quality ~ ., data = train.data.white)
+lm.white.sum<-summary(lm.fit.white)
+lm.white.pred <- predict(lm.fit.white, test.data.white)
+lm.white.mse <- mean((lm.white.pred - test.data.white$quality)^2)
+lm.white.mse
+
+par(mfrow = c(2, 2))
+plot(lm.fit.white)
+```
+*Figure 23: Diagnostic Plots for Segmented White Linear Model*
+
+```{r}
+lm.white.sum
+```
+*Figure 24: Summary of our White Linear Model*
+```{r}
+coefficients <- coef(lm.fit.white)[-1]
+names(coefficients) <- names(lm.fit.white$coefficients)[-1]
+
+barplot(coefficients, main = "Coefficients of Linear Regression Model for White Wines",
+        xlab = "Predictor Variables", ylab = "Increase in Quality per Unit Increase",
+        las = 2,  # Rotate x-axis labels by 90 degrees
+        cex.names = 0.5,  # Adjust size of x-axis labels
+        ylim = range(coefficients) * c(1.2, 1.3),  # Extend y-axis limits for better spacing
+        mar = c(5, 6, 4, 2)  # Adjust margin space: bottom, left, top, right
+)
+```
+*Figure 25: Plot of Coefficients for Segmented White Linear Model*
+
+### Best Subset Selection
+
+```{r}
+library(leaps)
+wine.fit.full<- regsubsets(quality~., data=wine.dat, nvmax=12)
+wine.fit.sum<- summary(wine.fit.full)
+
+par(mfrow=c(2,2))
+
+plot(wine.fit.sum$adjr2, type='l', main='Adj. R-Squared vs. # of Variables', xlab='# Variables', ylab='Adj. R-Squared')
+plot(wine.fit.sum$cp, type='l', main='Cp vs. # of Variables', xlab='# Variables', ylab='Cp')
+plot(wine.fit.sum$bic, type='l', main='BIC vs. # of Variables', xlab='# Variables', ylab='BIC')
+plot(wine.fit.sum$rss, type='l', main='RSS vs. # of Variables', xlab='# Variables', ylab='RSS')
+```
+*Figure 26: Criterion for BSS Variable Selection*
+```{r}
+#Dataset with both red and white
+lm.both.reduced <- lm(quality ~type+`fixed acidity`+`volatile acidity`+`residual sugar`+`free sulfur dioxide`+`total sulfur dioxide`+density+pH+sulphates, data = fin.train.data)
+
+reduced.lm.sum<-summary(lm.both.reduced)
+lm.reduced.pred <- predict(lm.both.reduced, fin.test.data)
+lm.both.mse <- mean((lm.reduced.pred - fin.test.data$quality)^2)
+lm.both.mse
+```
+
+```{r}
+#Just red with BSS
+wine.fit.red<- regsubsets(quality~., data=red.dat[,-1], nvmax=12)
+wine.fit.red.sum<- summary(wine.fit.red)
+
+par(mfrow=c(2,2))
+
+plot(wine.fit.red.sum$adjr2, type='l', main='Adj. R-Squared vs. # of Variables', xlab='# Variables', ylab='Adj. R-Squared')
+plot(wine.fit.red.sum$cp, type='l', main='Cp vs. # of Variables', xlab='# Variables', ylab='Cp')
+plot(wine.fit.red.sum$bic, type='l', main='BIC vs. # of Variables', xlab='# Variables', ylab='BIC')
+plot(wine.fit.red.sum$rss, type='l', main='RSS vs. # of Variables', xlab='# Variables', ylab='RSS')
+```
+*Figure 27: Criterion for BSS Variable Selection with Red Model*
+
+```{r}
+names(coef(wine.fit.red,6))
+
+lm.red.reduced <- lm(quality ~`volatile acidity`+`chlorides`++`total sulfur dioxide`+pH+sulphates+alcohol, data = train.data.red)
+reduced.red.sum<-summary(lm.red.reduced)
+lm.reduced.red.pred <- predict(lm.red.reduced, test.data.red)
+lm.red.mse.reduced <- mean((lm.reduced.red.pred - test.data.red$quality)^2)
+lm.red.mse.reduced
+```
+
+```{r}
+#Just white with BSS
+wine.fit.white<- regsubsets(quality~., data=white.dat[,-1], nvmax=12)
+wine.fit.white.sum<- summary(wine.fit.white)
+
+par(mfrow=c(2,2))
+
+plot(wine.fit.white.sum$adjr2, type='l', main='Adj. R-Squared vs. # of Variables', xlab='# Variables', ylab='Adj. R-Squared')
+plot(wine.fit.white.sum$cp, type='l', main='Cp vs. # of Variables', xlab='# Variables', ylab='Cp')
+plot(wine.fit.white.sum$bic, type='l', main='BIC vs. # of Variables', xlab='# Variables', ylab='BIC')
+plot(wine.fit.white.sum$rss, type='l', main='RSS vs. # of Variables', xlab='# Variables', ylab='RSS')
+```
+*Figure 28: Criterion for BSS Variable Selection with White Model*
+
+```{r}
+names(coef(wine.fit.white,8))
+
+lm.white.reduced <- lm(quality ~`fixed acidity`+`volatile acidity`+`residual sugar`+`free sulfur dioxide`+density+pH+sulphates+alcohol, data = train.data.red)
+reduced.white.sum<-summary(lm.white.reduced)
+lm.reduced.white.pred <- predict(lm.white.reduced, test.data.white)
+lm.white.mse.reduced <- mean((lm.reduced.white.pred - test.data.white$quality)^2)
+lm.white.mse.reduced
+```
+
+### Classification Tree
+
+```{r}
+library(tree)
+colnames(fin.train.data) <- gsub(" ", "_", colnames(fin.train.data))
+colnames(fin.test.data) <- gsub(" ", "_", colnames(fin.test.data))
+
+both.tree<-tree(quality~., data=fin.train.data)
+plot(both.tree)
+text(both.tree, pretty=0)
+```
+*Figure 29: Regression Tree Visualized for Full Model*
+
+```{r}
+pred <- predict(both.tree, newdata = fin.test.data)
+test.mse <- mean((pred - fin.test.data$quality)^2)
+test.mse
+```
+
+```{r}
+colnames(train.data.red) <- gsub(" ", "_", colnames(train.data.red))
+colnames(test.data.red) <- gsub(" ", "_", colnames(test.data.red))
+
+red.tree<-tree(quality~., data=train.data.red)
+plot(red.tree)
+text(red.tree, pretty=0)
+```
+*Figure 30: Regression Tree Visualized for Red Model*
+
+```{r}
+pred.red <- predict(red.tree, newdata = test.data.red)
+red.test.mse <- mean((pred.red - test.data.red$quality)^2)
+red.test.mse
+```
+
+```{r}
+colnames(train.data.white) <- gsub(" ", "_", colnames(train.data.white))
+colnames(test.data.white) <- gsub(" ", "_", colnames(test.data.white))
+
+white.tree<-tree(quality ~`fixed_acidity`+`volatile_acidity`+`residual_sugar`+`free_sulfur_dioxide`+density+pH+sulphates+alcohol, data=train.data.white)
+plot(white.tree)
+text(white.tree, pretty=0)
+```
+*Figure 31: Regression Tree Visualized for White Model*
+
+```{r}
+pred.white <- predict(white.tree, newdata = test.data.white)
+white.test.mse <- mean((pred.white - test.data.white$quality)^2)
+white.test.mse
+```
+
+### KNN
+
+```{r}
+#K-Nearest Neighbors Algorithm On Wines DataSet (az296)
+
+#Fitting our KNN model on the training data
+library(caret)
+set.seed(1)
+trainControl <- trainControl(method="repeatedcv",number=10,repeats=3)
+fit.knn <- train(quality~., 
+                 data = fin.train.data, 
+                 method="knn", 
+                 preProcess=c("center","scale"),
+                 trcontrol=trainControl)
+print(fit.knn)
+```
+*Figure 32: KNN Output*
+
+```{r}
+#Thus, according to our K-Fold Cross validation, we will proceed with the k=9 nearest neighbors
+#model since it has the lowest Training RMSE
+test_pred <- predict(fit.knn,newdata=fin.test.data)
+test_pred <- round(test_pred)
+fin.test.data["pred_quality"] <- test_pred
+accuracy <- mean(fin.test.data$quality == fin.test.data$pred_quality)
+statement_KNN <- paste0("The test accuracy of our KNN algorithm with K=9 is: ", round(accuracy,digits=3))
+print(statement_KNN)
+```
